@@ -2,6 +2,9 @@ from deepeval import assert_test
 from deepeval.test_case import LLMTestCase, LLMTestCaseParams
 from deepeval.metrics import GEval
 from deepeval.models import GeminiModel
+import os
+from dotenv import load_dotenv
+load_dotenv(".env.local")
 
 def test_correctness():
     correctness_metric = GEval(
@@ -9,7 +12,7 @@ def test_correctness():
         criteria="Determine if the 'actual output' is correct based on the 'expected output'.",
         evaluation_params=[LLMTestCaseParams.ACTUAL_OUTPUT, LLMTestCaseParams.EXPECTED_OUTPUT],
         threshold=0.3,
-        model=GeminiModel(model="gemini-2.5-flash", api_key="AIzaSyCDJjri4nyxk440hOXvaNFJunQsPBfiCM8")
+        model=GeminiModel(model="gemini-2.5-flash", api_key=os.getenv("GOOGLE_API_KEY"))
     )
     test_case = LLMTestCase(
         input="I have a persistent cough and fever. Should I be worried?",
