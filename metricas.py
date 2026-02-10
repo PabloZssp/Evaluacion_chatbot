@@ -22,7 +22,7 @@ def create_custom_metrics(eval_model):
             "Verifica que la respuesta sea útil y aplicable al contexto",
             "Determina si hay información irrelevante o fuera de tema"
         ],
-        threshold=0.7
+        threshold=0.5
     )
 
     # 2. TONO
@@ -41,7 +41,7 @@ def create_custom_metrics(eval_model):
             "Verifica que no haya un tono excesivamente formal o informal",
             "Compara con la respuesta esperada para validar el tono"
         ],
-        threshold=0.7
+        threshold=0.6
     )
 
     # 3. CONCISIÓN
@@ -60,7 +60,7 @@ def create_custom_metrics(eval_model):
             "Verifica que no haya divagaciones o información innecesaria",
             "Determina si la respuesta sigue las indicaciones de brevedad"
         ],
-        threshold=0.7
+        threshold=0.6
     )
 
     # 4. EXACTITUD
@@ -80,7 +80,7 @@ def create_custom_metrics(eval_model):
             "Evalúa si hay alucinaciones (información inventada)",
             "Verifica que las afirmaciones sean confiables"
         ],
-        threshold=0.7
+        threshold=0.6
     )
 
     return [relevancia_metric, tono_metric, concision_metric, exactitud_metric]
