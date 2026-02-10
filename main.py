@@ -2,14 +2,17 @@ from deepeval import evaluate
 from deepeval.test_case import LLMTestCase
 from deepeval.models import OllamaModel
 from metricas import create_custom_metrics
-from preguntas import preguntar_chatbot   # importa tu función
+from preguntas import preguntar_chatbot   
 
 def main():
+
+    """
+    Función principal para ejecutar la evaluación del chatbot utilizando métricas personalizadas.:V"""
     eval_model = OllamaModel(model="llama3.2:latest")
     metrics = create_custom_metrics(eval_model)
 
-    # Caso SIN expected_output (solo relevancia y concisión)
-    actual_output = preguntar_chatbot("que puedo hacer en la ciudad de mexico?")  # llama a tu función para obtener la respuesta del chatbot
+    
+    actual_output = preguntar_chatbot("que puedo hacer en la ciudad de mexico?")  
     test_case_simple = LLMTestCase(
         input="que puedo hacer en la ciudad de mexico?",
         actual_output=actual_output,
