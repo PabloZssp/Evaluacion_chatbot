@@ -5,8 +5,8 @@ from metricas import create_custom_metrics
 from preguntas import preguntar_chatbot   
 
 def main():
-    #eval_model = OllamaModel(model="llama3.2:latest")
-    eval_model = OllamaModel(model="gemma2")
+    eval_model = OllamaModel(model="llama3.2:latest")
+    #eval_model = OllamaModel(model="gemma2:latest")
     metrics = create_custom_metrics(eval_model)
 
     
@@ -34,9 +34,12 @@ EJEMPLO DE RESPUESTA IDEAL:
 * 🎨 **Palacio de Bellas Artes:** Admira sus murales y su arquitectura Art Nouveau.
 * 🌮 **Coyoacán:** Pasea por sus plazas y prueba los churros tradicionales.
 ¿Te interesa más el arte o la historia?"
-"""
-
+""",
+    retrieval_context=[ "La Ciudad de México es reconocida por su riqueza cultural, histórica y gastronómica.", "Museos destacados: Antropología, Soumaya, Frida Kahlo.", "Arquitectura: Palacio de Bellas Artes, Palacio Postal.", "Barrios tradicionales: Coyoacán, San Ángel." ]
     )
+
+
+    #retrieval_context=[ "La Ciudad de México es reconocida por su riqueza cultural, histórica y gastronómica.", "Museos destacados: Antropología, Soumaya, Frida Kahlo.", "Arquitectura: Palacio de Bellas Artes, Palacio Postal.", "Barrios tradicionales: Coyoacán, San Ángel." ]
     
     results_simple = evaluate([test_case_simple], [metrics[0], metrics[1], metrics[2]])
 
