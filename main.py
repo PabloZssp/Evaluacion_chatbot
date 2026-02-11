@@ -5,8 +5,10 @@ from metricas import create_custom_metrics
 from preguntas import preguntar_chatbot   # importa tu función
 
 def main():
-    eval_model = OllamaModel(model="llama3.2:latest")
+    eval_model = OllamaModel(model="llama3.2:3b")
     metrics = create_custom_metrics(eval_model)
+
+|   
 
     # Caso SIN expected_output (solo relevancia y concisión)
     actual_output = preguntar_chatbot("que puedo hacer en la ciudad de mexico?")  # llama a tu función para obtener la respuesta del chatbot
@@ -16,7 +18,7 @@ def main():
         expected_output="La respuesta debe mencionar actividades turísticas y culturales en la Ciudad de México."
     )
 
-    results_simple = evaluate([test_case_simple], [metrics[0], metrics[1], metrics[2]])
+    results_simple = evaluate([test_case_simple], [metrics[0], metrics[1], metrics[2], metrics[3]])
 
     print("\nResultados sin expected_output:")
     for r in results_simple.test_results:
@@ -32,3 +34,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
