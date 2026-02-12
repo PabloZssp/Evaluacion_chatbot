@@ -7,8 +7,7 @@ from preguntas import preguntar_chatbot   # importa tu función
 def main():
     eval_model = OllamaModel(model="llama3.2:3b")
     metrics = create_custom_metrics(eval_model)
-
-|   
+   
 
     # Caso SIN expected_output (solo relevancia y concisión)
     actual_output = preguntar_chatbot("que puedo hacer en la ciudad de mexico?")  # llama a tu función para obtener la respuesta del chatbot
