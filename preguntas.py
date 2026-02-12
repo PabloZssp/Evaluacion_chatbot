@@ -1,7 +1,7 @@
 import os
 import requests
 from dotenv import load_dotenv
-#
+
 load_dotenv(".env.local")  # asegúrate de cargar tu archivo correcto
 
 def preguntar_chatbot(question: str, session_id: str = "testing-https-produccion_v3"):

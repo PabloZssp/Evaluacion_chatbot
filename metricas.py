@@ -54,7 +54,7 @@ def create_custom_metrics(eval_model):
         threshold=0.5
     )
 
-    # 4. EXACTITUD: Integridad de la lista y formato técnico.
+    ## 4. EXACTITUD: Integridad de la lista y formato técnico.
     exactitud_metric = GEval(
         name="Exactitud",
         model=eval_model,

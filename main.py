@@ -8,7 +8,7 @@ import os
 from dotenv import load_dotenv
 
 load_dotenv(".env.local")  # asegúrate de cargar tu archivo correcto
-
+#S
 def main():
     #eval_model = OllamaModel(model="llama3.2:latest")
     #eval_model = OllamaModel(model="gemma2:latest")

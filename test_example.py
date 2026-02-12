@@ -5,7 +5,7 @@ from deepeval.models import GeminiModel
 import os
 from dotenv import load_dotenv
 load_dotenv(".env.local")
-#
+
 def test_correctness():
     correctness_metric = GEval(
         name="Correctness",
