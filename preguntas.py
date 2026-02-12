@@ -2,9 +2,9 @@ import os
 import requests
 from dotenv import load_dotenv
 
-load_dotenv("env.local")  # asegúrate de cargar tu archivo correcto
+load_dotenv(".env.local")  # asegúrate de cargar tu archivo correcto
 
-def preguntar_chatbot(question: str, session_id: str = "testing-https-prod"):
+def preguntar_chatbot(question: str, session_id: str = "testing-https-produccion_v3"):
     url = os.getenv("URL")
     headers = {
         "Content-Type": os.getenv("CONTENT_TYPE"),
