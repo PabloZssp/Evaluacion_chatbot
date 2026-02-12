@@ -4,7 +4,7 @@ from dotenv import load_dotenv
 #
 load_dotenv(".env.local")  # asegúrate de cargar tu archivo correcto
 
-def preguntar_chatbot(question: str, session_id: str = "testing-https-produccion_v3"):
+def preguntar_chatbot(question: str, session_id: str = "testing-https-produccion_v6"):
     url = os.getenv("URL")
     headers = {
         "Content-Type": os.getenv("CONTENT_TYPE"),

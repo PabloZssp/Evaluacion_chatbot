@@ -1,3 +1,5 @@
+import os
+os.environ["DEEPEVAL_DISABLE_TIMEOUTS"] = "True" # Desactiva el cronómetro
 from deepeval import evaluate
 from deepeval.test_case import LLMTestCase
 from deepeval.models import OllamaModel
