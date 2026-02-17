@@ -13,6 +13,9 @@ from weaviate.auth import AuthApiKey
 load_dotenv(".env.local")  # asegúrate de cargar tu archivo correcto
 #S
 def main():
+
+    pregunta="que es chapultepec?" 
+    
    # Conectar a Weaviate
     client = weaviate.connect_to_weaviate_cloud(
        cluster_url=os.getenv("WEAVIATE_URL"),
@@ -26,18 +29,18 @@ def main():
     metrics = create_custom_metrics(eval_model)
 
     
-    actual_output = preguntar_chatbot("que eventos hay para este mes?") 
+    actual_output = preguntar_chatbot(pregunta) 
 
     # Recuperar contexto desde Weaviate 
     response = collection.query.near_text(
-        query="eventos de este mes",
-        limit=50 #<- aqui mero hay que poner los documentos que queramos que tome
+        query=pregunta,
+        limit=100 #<- aqui mero hay que poner los documentos que queramos que tome
     )
-    contexto = [str(obj.properties) for obj in response.objects]
+    contexto = [str(obj.properties) for obj in response.objects]#<- aqui se le puede cambiar para tomar campos en especifico
 
 
     test_case_simple = LLMTestCase(
-        input="que eventos hay para este mes?",
+        input=pregunta,
         actual_output=actual_output,
         expected_output = """ ¡Claro! La Ciudad de México es vibrante y ofrece muchísimas experiencias. Aquí te doy algunas ideas para que disfrutes al máximo:
         * Museo Nacional de Antropología...

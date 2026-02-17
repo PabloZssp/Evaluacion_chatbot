@@ -1,5 +1,3 @@
-from deepeval.metrics import GEval, AnswerRelevancyMetric
-from deepeval.test_case import LLMTestCaseParams
 from deepeval.metrics import GEval
 from deepeval.metrics import GEval, AnswerRelevancyMetric
 from deepeval.test_case import LLMTestCaseParams
@@ -42,18 +40,17 @@ def create_custom_metrics(eval_model):
         LLMTestCaseParams.RETRIEVAL_CONTEXT
     ],
     evaluation_steps=[
-        "Responde en español",
-        "1. Identificar las 'unidades de información útil' (eventos, fechas, precios, lugares).",
-        "2. Identificar 'unidades de relleno': frases sin datos, repeticiones o campos que dicen 'No disponible'.",
+        "Responde en español.",
+        "1. Si la pregunta es sobre eventos locales (listado con nombre, fecha, descripción, precios, lugares), identificar las 'unidades de información útil' y verificar que al menos 1 provengan del contexto. En otro caso, omite esta verificación.",
+        "2. Si la pregunta es general, evaluar que la respuesta sea concisa, factual y sin relleno, aunque no provenga del contexto.",
         "3. Evaluar la estructura: ¿El bot va directo al grano tras el saludo inicial?",
         "4. Penalizar etiquetas técnicas internas (ej. 'building_name:'), pero permitir URLs de eventos si aportan valor.",
-        "5. Penalizar si hay más de 4000 caracteres por respuesta completa.",
-        "6. Asignar puntuación alta solo si el 90% del mensaje consiste en información útil o frases de cortesía obligatorias.",
-        "La puntuación baja si hay párrafos explicativos fuera del contexto o relleno excesivo."
+        "5. Penalizar si hay más de 4000 caracteres en la respuesta completa.",
+        "6. Asignar puntuación alta solo si al menos el 90% del mensaje consiste en información útil o frases de cortesía obligatorias.",
+        "7. Penalizar si hay párrafos explicativos fuera del contexto o relleno excesivo."
     ],
     threshold=0.5
-   )    
-
+    )
 
     ## 4. EXACTITUD: Integridad de la lista y formato técnico.
     exactitud_metric = GEval(
