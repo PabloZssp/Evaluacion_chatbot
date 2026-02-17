@@ -6,29 +6,48 @@ from metricas import create_custom_metrics
 from preguntas import preguntar_chatbot   
 import os
 from dotenv import load_dotenv
+import weaviate
+from weaviate.auth import AuthApiKey
+
 
 load_dotenv(".env.local")  # asegúrate de cargar tu archivo correcto
 #S
 def main():
+   # Conectar a Weaviate
+    client = weaviate.connect_to_weaviate_cloud(
+       cluster_url=os.getenv("WEAVIATE_URL"),
+       auth_credentials=AuthApiKey(os.getenv("WEAVIATE_API_KEY")),
+    )
+    collection = client.collections.use("Eventos_cdmx")
+
     #eval_model = OllamaModel(model="llama3.2:latest")
     #eval_model = OllamaModel(model="gemma2:latest")
     eval_model = GeminiModel(model="gemini-2.5-flash",api_key=os.getenv("GOOGLE_API_KEY"))
     metrics = create_custom_metrics(eval_model)
 
     
-    actual_output = preguntar_chatbot("que eventos hay para este mes?")  
+    actual_output = preguntar_chatbot("que eventos hay para este mes?") 
+
+    # Recuperar contexto desde Weaviate 
+    response = collection.query.near_text(
+        query="eventos de este mes",
+        limit=50 #<- aqui mero hay que poner los documentos que queramos que tome
+    )
+    contexto = [str(obj.properties) for obj in response.objects]
+
+
     test_case_simple = LLMTestCase(
         input="que eventos hay para este mes?",
         actual_output=actual_output,
         expected_output = """ ¡Claro! La Ciudad de México es vibrante y ofrece muchísimas experiencias. Aquí te doy algunas ideas para que disfrutes al máximo:
         * Museo Nacional de Antropología...
         """,
-    retrieval_context=[ "La Ciudad de México es reconocida por su riqueza cultural, histórica y gastronómica.", "Museos destacados: Antropología, Soumaya, Frida Kahlo.", "Arquitectura: Palacio de Bellas Artes, Palacio Postal.", "Barrios tradicionales: Coyoacán, San Ángel." ]
+    retrieval_context=contexto
     )
     
     results_simple = evaluate([test_case_simple], metrics)
 
-    print("\nResultados sin expected_output:")
+    print("\nResultados :")
     for r in results_simple.test_results:
         print(f"Pregunta: {r.input}")
         print(f"Respuesta: {r.actual_output}")
@@ -38,7 +57,8 @@ def main():
             print(f"  Umbral: {m.threshold}")
             print(f"  ¿Pasó?: {m.success}")
             print(f"  Razón: {m.reason}")
-
+            print("----------------------------------------------------")
+    client.close()
 
 if __name__ == "__main__":
     main()

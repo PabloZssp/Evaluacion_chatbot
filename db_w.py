@@ -14,12 +14,12 @@ client = weaviate.connect_to_weaviate_cloud(
     cluster_url=weaviate_url,
     auth_credentials=AuthApiKey(weaviate_key),
 )
-collection = client.collections.use("DemoCollection")
+collection = client.collections.use("Eventos_cdmx")
 
 # 3. Consulta semántica simple
 response = collection.query.near_text(
-    query="ciudad",
-    limit=5
+    query="Febrero",
+    limit=2
 )
 
 print("Resultados de búsqueda:\n")
@@ -28,12 +28,12 @@ for obj in response.objects:
 
 # 4. Consulta semántica con filtro
 response = collection.query.near_text(
-    query="peliculas para ver en familia",
+    query="febrero",
     limit=3,
-    filters=Filter.by_property("description").like("familia")
+    filters=Filter.by_property("description").like("febrero")
 )
 
-print("\nResultados filtrados (que mencionan 'familia'):\n")
+print("\nResultados filtrados (que mencionan 'febrero'):\n")
 for obj in response.objects:
     print(f"- {obj.properties['title']}: {obj.properties['description']}")
 

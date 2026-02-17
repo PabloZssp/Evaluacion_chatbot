@@ -35,24 +35,25 @@ def create_custom_metrics(eval_model):
 
     # 3. CONCISIÓN: Foco en la limpieza de datos "No disponibles".
     concision_metric = GEval(
-        name="Concisión",
-        model=eval_model,
-        evaluation_params=[
-            LLMTestCaseParams.ACTUAL_OUTPUT,
-            LLMTestCaseParams.RETRIEVAL_CONTEXT
-        ],
-        evaluation_steps=[
-            "Responde en español",
-            "1. Identificar las 'unidades de información útil' extraídas del contexto (datos reales de eventos).",
-            "2. Identificar 'unidades de relleno': frases que no aportan datos, repeticiones de la misma idea o campos que dicen 'No disponible'.",
-            "3. Evaluar la estructura: ¿El bot va directo al grano tras el saludo inicial obligatorio?",
-            "4. Penalizar la inclusión de metadatos internos o etiquetas (como 'building_name:') que no deberían mostrarse al usuario final.",
-            "5. Penalizar si hay más de 500 caracteres por respuesta completa.",
-            "6. Asignar una puntuación alta solo si el 90% del mensaje consiste en información útil o frases de cortesía obligatorias del template.",
-            "La puntuación baja drásticamente si se incluyen párrafos explicativos que no están en las instrucciones o en el contexto."
-        ],
-        threshold=0.5
-    )
+    name="Concisión",
+    model=eval_model,
+    evaluation_params=[
+        LLMTestCaseParams.ACTUAL_OUTPUT,
+        LLMTestCaseParams.RETRIEVAL_CONTEXT
+    ],
+    evaluation_steps=[
+        "Responde en español",
+        "1. Identificar las 'unidades de información útil' (eventos, fechas, precios, lugares).",
+        "2. Identificar 'unidades de relleno': frases sin datos, repeticiones o campos que dicen 'No disponible'.",
+        "3. Evaluar la estructura: ¿El bot va directo al grano tras el saludo inicial?",
+        "4. Penalizar etiquetas técnicas internas (ej. 'building_name:'), pero permitir URLs de eventos si aportan valor.",
+        "5. Penalizar si hay más de 4000 caracteres por respuesta completa.",
+        "6. Asignar puntuación alta solo si el 90% del mensaje consiste en información útil o frases de cortesía obligatorias.",
+        "La puntuación baja si hay párrafos explicativos fuera del contexto o relleno excesivo."
+    ],
+    threshold=0.5
+   )    
+
 
     ## 4. EXACTITUD: Integridad de la lista y formato técnico.
     exactitud_metric = GEval(
