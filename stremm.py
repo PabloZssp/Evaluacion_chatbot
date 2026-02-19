@@ -7,6 +7,7 @@ from deepeval.models import GeminiModel
 from datetime import datetime
 from insercion import insertar_metricas_db, crear_df_resultados
 
+
 # --- CONFIGURACIÓN ---
 # --- CONFIGURACIÓN ---
 os.environ["DEEPEVAL_DISABLE_TIMEOUTS"] = "True"
@@ -38,7 +39,8 @@ def load_evaluator():
 # ---------------------------------------------------------
 if pagina == 'graficos':
     import graficos
-    graficos.mostrar()
+    graficos.semaforo_strem()
+    
 
 # ---------------------------------------------------------
 # PESTAÑA: INICIO (EVALUACIÓN)
@@ -48,16 +50,23 @@ elif pagina == 'Inicio':
 
     st.title("☳ Evaluación con Deepeval")
     st.write("Presiona el botón para evaluar y guardar los resultados.")
+    #POSIBLEMENTE CORREGIR------------------------
+    pregunta = st.text_input("Introduce tu pregunta aquí:")
 
     if st.button("🚀 Iniciar Evaluación", type="primary"):
-        status_placeholder = st.empty()
+        if pregunta.strip():
+            status_placeholder = st.empty()
         
         with status_placeholder.container():
             st.warning("⏳ Procesando evaluación...")
             
             # 1. Obtener respuesta del chatbot
-            pregunta = "¿Cuáles son los mejores restaurantes de la CDMX?"
+            #pregunta = "¿Cual es el edificio mas alto de la cdmx?"
             actual_output = preguntar_chatbot(pregunta)
+
+    #------------------------------------------------------------
+
+            
             
             # 2. Crear caso de prueba
             test_case_simple = LLMTestCase(
@@ -117,9 +126,10 @@ elif pagina == 'Inicio':
             # --- GUARDAR EN DB ---
             with st.spinner("💾 Guardando en base de datos..."):
                 
-                # df_para_db = crear_df_resultados(test_case_simple, df_visualizacion)
-                # exito = insertar_metricas_db(df_para_db)
+                df_para_db = crear_df_resultados(test_case_simple, df_visualizacion)
+                exito = insertar_metricas_db(df_para_db)
                 st.success("✅ Resultados procesados")
+                
 
 # ---------------------------------------------------------
 # PESTAÑA: MÉTRICAS (CONFIGURACIÓN O LISTADO)
