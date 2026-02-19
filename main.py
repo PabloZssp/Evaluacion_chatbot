@@ -14,7 +14,8 @@ load_dotenv(".env.local")  # asegúrate de cargar tu archivo correcto
 #S
 def main():
 
-    pregunta="que eventos hay para febrero" 
+    pregunta=["que eventos hay para febrero",
+              "que eventos hay para enero"] 
     
    # Conectar a Weaviate
     client = weaviate.connect_to_weaviate_cloud(

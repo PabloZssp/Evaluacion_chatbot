@@ -26,7 +26,8 @@ def create_custom_metrics(eval_model):
             "2. Verificación de Idioma: ¿El idioma del output coincide estrictamente con el del input?",
             "3. Validación de Apertura: ¿Se utilizó la frase introductoria específica requerida por el template?",
             "4. Análisis de Empatía: En caso de errores o falta de datos, ¿la respuesta mantiene la calidez o se vuelve robótica?",
-            "La puntuación es el grado de cumplimiento de estos 4 pilares de voz de marca."
+            "La puntuación es el grado de cumplimiento de estos 4 pilares de voz de marca en una escala de 0.0 a 1.0."
+            
         ],
         threshold=0.8
     )
@@ -48,6 +49,8 @@ def create_custom_metrics(eval_model):
         "5. Penalizar si hay más de 4000 caracteres en la respuesta completa.",
         "6. Asignar puntuación alta solo si al menos el 90% del mensaje consiste en información útil o frases de cortesía obligatorias.",
         "7. Penalizar si hay párrafos explicativos fuera del contexto o relleno excesivo."
+
+        "La puntuación será variable en una escala de 0.0 a 1.0."
     ],
     threshold=0.8
     )
@@ -77,7 +80,7 @@ def create_custom_metrics(eval_model):
         "2B. VERIFICACIÓN DE DATOS: URLs inventadas = alucinación crítica; fechas o direcciones distintas = error menor.",
         "3B. LIMPIEZA: Penalizar si aparecen placeholders como 'No disponible', 'No especificado' o campos técnicos.",
 
-        #"La puntuación será 1.0 solo si cumple con su flujo correspondiente y no inventa información externa."
+        "La puntuación será variable en una escala de 0.0 a 1.0."
     ],
     threshold=0.8
     )
