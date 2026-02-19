@@ -14,7 +14,7 @@ load_dotenv(".env.local")  # asegúrate de cargar tu archivo correcto
 #S
 def main():
 
-    pregunta="que es chapultepec?" 
+    pregunta="que eventos hay para febrero" 
     
    # Conectar a Weaviate
     client = weaviate.connect_to_weaviate_cloud(
@@ -34,7 +34,7 @@ def main():
     # Recuperar contexto desde Weaviate 
     response = collection.query.near_text(
         query=pregunta,
-        limit=100 #<- aqui mero hay que poner los documentos que queramos que tome
+        limit=300 #<- aqui mero hay que poner los documentos que queramos que tome
     )
     contexto = [str(obj.properties) for obj in response.objects]#<- aqui se le puede cambiar para tomar campos en especifico
 
