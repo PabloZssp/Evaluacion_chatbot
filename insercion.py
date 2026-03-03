@@ -9,7 +9,7 @@ load_dotenv('.env.local')
 
 def crear_df_resultados(test_case, df_metricas: pd.DataFrame) -> pd.DataFrame:
     df_insert = df_metricas.rename(columns={
-        "Respuesta": "respuesta", # <--- Ahora la renombramos directamente
+        "Respuesta": "respuesta", 
         "Métrica": "metrica", 
         "Puntuación": "puntuacion", 
         "Umbral": "umbral", 

@@ -7,15 +7,12 @@ from deepeval.models import GeminiModel
 from datetime import datetime
 from insercion import insertar_metricas_db, crear_df_resultados
 
-
-# --- CONFIGURACIÓN ---
-# --- CONFIGURACIÓN ---
 os.environ["DEEPEVAL_DISABLE_TIMEOUTS"] = "True"
 st.set_page_config(page_title="Evaluador de Chatbot", layout="wide")
 
-# --- NAVEGACIÓN LATERAL ---
+
 st.sidebar.title('Navegar')
-pagina = st.sidebar.radio('Ir a', ['Inicio', 'graficos', 'metricas'])
+pagina = st.sidebar.radio('Ir a', ['Inicio', 'graficos', 'metricas','Cargar archivos'])
 
 try:
     from metricas import create_custom_metrics
@@ -27,30 +24,25 @@ except Exception as e:
     st.error(f"✖ Error al importar archivos locales: {e}")
     st.stop()
 
-# --- CARGA DE EVALUADOR (Cacheado) ---
+
 @st.cache_resource
 def load_evaluator():
-    # Asegúrate de importar GeminiModel aquí o arriba
+    
     model = GeminiModel(model="gemini-2.0-flash", api_key=os.getenv("GOOGLE_API_KEY"))
     return create_custom_metrics(model)
 
-# ---------------------------------------------------------
-# PESTAÑA: GRÁFICOS
-# ---------------------------------------------------------
 if pagina == 'graficos':
     import graficos
     graficos.semaforo_strem()
     
+    
 
-# ---------------------------------------------------------
-# PESTAÑA: INICIO (EVALUACIÓN)
-# ---------------------------------------------------------
 elif pagina == 'Inicio':
     metrics = load_evaluator()
 
     st.title("☳ Evaluación con Deepeval")
     st.write("Presiona el botón para evaluar y guardar los resultados.")
-    #POSIBLEMENTE CORREGIR------------------------
+    
     pregunta = st.text_input("Introduce tu pregunta aquí:")
 
     if st.button("🚀 Iniciar Evaluación", type="primary"):
@@ -68,7 +60,7 @@ elif pagina == 'Inicio':
 
             
             
-            # 2. Crear caso de prueba
+            
             test_case_simple = LLMTestCase(
                 input=pregunta,
                 actual_output=actual_output,
@@ -76,18 +68,18 @@ elif pagina == 'Inicio':
                 retrieval_context=["Riqueza gastronómica de CDMX", "Barrios tradicionales"]
             )
 
-            # 3. Ejecutar Evaluación
+            
             evaluation_run = evaluate([test_case_simple], metrics)
             
-            # Normalizar resultados
+            
             if hasattr(evaluation_run, 'test_results'):
                 results_to_process = evaluation_run.test_results
             else:
-                results_to_process = evaluation_run # Ajustar según tu versión
+                results_to_process = evaluation_run 
 
         status_placeholder.empty()
 
-        # --- PROCESAR TABLA ---
+        
         filas = []
         for r in results_to_process:
             respuesta_chat = getattr(r, 'actual_output', actual_output)
@@ -105,7 +97,7 @@ elif pagina == 'Inicio':
         if filas:
             df_visualizacion = pd.DataFrame(filas)
             
-            # --- MOSTRAR EN INTERFAZ ---
+            
             st.subheader("📝 Respuesta del Chatbot")
             st.info(actual_output)
             
@@ -123,7 +115,7 @@ elif pagina == 'Inicio':
                         st.write("**Análisis**")
                         st.caption(row['Razón'])
 
-            # --- GUARDAR EN DB ---
+            # GUARDAR EN DB
             with st.spinner("💾 Guardando en base de datos..."):
                 
                 df_para_db = crear_df_resultados(test_case_simple, df_visualizacion)
@@ -131,11 +123,16 @@ elif pagina == 'Inicio':
                 st.success("✅ Resultados procesados")
                 
 
-# ---------------------------------------------------------
-# PESTAÑA: MÉTRICAS (CONFIGURACIÓN O LISTADO)
-# ---------------------------------------------------------
+
 elif pagina == 'metricas':
     st.title("Configuración de Métricas")
     
-    # Puedes mostrar un resumen de lo que hay en metricas.py
+    
+
+
+elif pagina == 'Cargar archivos':
+    import leer_archivos
+    leer_archivos.mostrar()
+
+
     
