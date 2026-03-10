@@ -25,19 +25,18 @@ def mostrar():
 
     st.title("Evaluación por RONDAS ")
 
-    #Configuración de entrada
+  
     col1, col2 = st.columns([3, 1])
     with col1:
         archivo_subido = st.file_uploader("Sube tu archivo (Excel o CSV)", type=['csv', 'xlsx'])
     with col2:
         rondas = st.number_input("Número de rondas", min_value=1, value=4, step=1)
 
-    # Variable para persistir los datos
     datos_cargados = None
 
     if archivo_subido is not None:
         try:
-            # Lectura de datos
+            
             if archivo_subido.name.endswith('.csv'):
                 try:
                     datos_cargados = pd.read_csv(archivo_subido, encoding='utf-8')
@@ -46,20 +45,16 @@ def mostrar():
             else:
                 datos_cargados = pd.read_excel(archivo_subido)
         
-            # Muestra de éxito y vista previa
+           
             st.success(f"Archivo cargado. {len(datos_cargados)} filas listas.")
         
             with st.expander("Vista previa de los datos", expanded=False):
                 st.dataframe(datos_cargados.head())
 
-            st.divider() # Linea visual divisoria
-
-            # ------------------------------------------------------
-            # Este botón solo aparece si el archivo se procesó bien
+            st.divider() 
             if st.button("Iniciar Evaluación", type="primary", use_container_width=True):
                 st.info(f"Iniciando evaluación de {len(datos_cargados)} preguntas con {rondas} rondas cada una...")
             
-                # LOGICA NUEVA AQUI
                 if 'preguntas' in datos_cargados.columns:
 
                     todos_los_resultados = []

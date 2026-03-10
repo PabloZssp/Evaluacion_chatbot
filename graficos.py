@@ -296,5 +296,5 @@ def graficar_errores_preguntas(df):
     st.plotly_chart(fig, use_container_width=True)
 
 def mostrar_v2():
-    grafica_barras(df_total)
+    graficar_errores_preguntas(df_total)
 

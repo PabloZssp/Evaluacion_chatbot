@@ -1,151 +1,169 @@
-import pandas as pd
-import psycopg2
+import json
 import os
+
 from dotenv import load_dotenv
-import plotly.express as px
+from metricas import create_custom_metrics
+
+from deepeval import evaluate
+from deepeval.models import GeminiModel
+from deepeval.test_case import LLMTestCase
 import streamlit as st
-import plotly.graph_objects as go
-from graficos import obtener_historial_metricas
+import pandas as pd
+from graficos import semaforo, grafica_barras, graficar_errores_preguntas
 
-df = obtener_historial_metricas()
-print(df.columns)
+import json
+from datetime import datetime
+from main import obtener_metricas_pregunta
+import streamlit as st
+import json
+import pandas as pd
+from datetime import datetime
 
-#funciones globales
-#funciones basicas
-def obtener_icono(porcentaje):
-    if porcentaje >= 80:
-        return "🟢"
-    elif porcentaje >= 70:
-        return "🟡"
-    else:
-        return "🔴"
+load_dotenv(".env.local")
+
+# Configuración de página (opcional, para que la tabla se vea más ancha)
+st.set_page_config(layout="wide")
+
+# 1. Cargar datos y extraer fechas disponibles
+with open("runs_export_with_context.json", encoding="utf-8") as f:
+    runs = json.load(f)
+
+fechas_disponibles = []
+for run in runs:
+    st_time = run.get("start_time")
+    if st_time:
+        try:
+            dt = datetime.strptime(st_time[:10], "%Y-%m-%d").date()
+            fechas_disponibles.append(dt)
+        except:
+            continue
+
+min_fecha = min(fechas_disponibles) if fechas_disponibles else datetime.now().date()
+max_fecha = max(fechas_disponibles) if fechas_disponibles else datetime.now().date()
+
+# 2. Interfaz de Streamlit
+st.title("Filtro de Casos")
+
+col1, col2 = st.columns(2)
+
+with col1:
+    f_inicio = st.date_input("Fecha de inicio", value=min_fecha, min_value=min_fecha, max_value=max_fecha)
+
+with col2:
+    f_fin = st.date_input("Fecha final", value=max_fecha, min_value=min_fecha, max_value=max_fecha)
+
+# 3. Lógica de filtrado y recolección de datos
+datos_tabla = []
+
+for run in runs:
+    start_time_str = run.get("start_time")
+    if not start_time_str:
+        continue
+    
+    try:
+        fecha_run = datetime.strptime(start_time_str[:10], "%Y-%m-%d").date()
         
-def obtener_interpretacion(porcentaje):
-    if porcentaje >= 80:
-        return 'Cumple criterio mínimo de aceptación de forma satisfactoria'
-    elif porcentaje >= 70:
-        return 'Aceptable, requiere ajuste'
-    else:
-        return 'No cumple, acción prioritaria'
+        if f_inicio <= fecha_run <= f_fin:
+            inputs = run.get("inputs") or {}
+            outputs = run.get("outputs") or {}
+            
+            pregunta = inputs.get("question", "")
+            respuesta = outputs.get("output") or outputs.get("answer", "")
+            
+            # Solo agregamos si hay contenido
+            if pregunta and respuesta:
+                datos_tabla.append({
+                    "Fecha": start_time_str[:16], # Mostramos fecha y hora (sin segundos)
+                    "Pregunta": pregunta,
+                    "Respuesta": respuesta
+                })
+    except:
+        continue
 
-#grafica de barras
-def grafica_monitoreo(df:pd.DataFrame):
-    st.title("Panel de Monitoreo de Métricas")
-    metricas_disponibles = df['metrica'].unique()
-    metrica_seleccionada = st.sidebar.selectbox("Selecciona la métrica a visualizar:", metricas_disponibles)
-    # 2. Filtrar el DataFrame
-    df_filtrado = df[df['metrica'] == metrica_seleccionada].reset_index()
-    # 3. Mostrar métricas clave en la parte superior (KPIs)
-    col1, col2, col3 = st.columns(3)
-    promedio = df_filtrado['puntuacion'].mean()
-    ultimo_estado = df_filtrado['estado'].iloc[-1]
+# 4. Mostrar métrica y Dataframe
+st.metric("Total de preguntas a evaluar", len(datos_tabla))
+
+if datos_tabla:
+    df = pd.DataFrame(datos_tabla)
+    # Mostramos la tabla. use_container_width hace que ocupe todo el ancho
+    st.dataframe(df, use_container_width=True)
+else:
+    st.warning("No se encontraron datos para el rango seleccionado.")
+
+
+# --- COLOCAR DEBAJO DEL DATAFRAME ---
+
+# Definimos el número de rondas (puedes cambiarlo por un st.number_input si prefieres)
+rondas = 1 
+
+if st.button("Iniciar Evaluación", type="primary", use_container_width=True):
+    # Usamos len(datos_tabla) que son los datos ya filtrados por fecha
+    st.info(f"Iniciando evaluación de {len(datos_tabla)} preguntas con {rondas} rondas cada una...")
+
+    todos_los_resultados = []
     
-    col1.metric("Promedio Puntuación", f"{promedio:.2f}")
-    col2.metric("Último Estado", ultimo_estado)
-    col3.metric("Total Pruebas", len(df_filtrado))
+    # Iteramos por las rondas
+    for r in range(int(rondas)):
+        ronda_actual = r + 1
+        if ronda_actual > 1:
+            st.markdown("---")
+            st.markdown(f"**INICIO DE RONDA {ronda_actual}**")
+            st.markdown("---")
+            
+        st.write(f"Procesando Ronda {ronda_actual}")
+        resultados_ronda = []
+        progreso = st.progress(0)
+        total = len(datos_tabla)
 
-    # 4. Crear la Gráfica con Plotly
-    fig = px.line(
-        df_filtrado, 
-        x=df_filtrado.index, 
-        y='puntuacion',
-        title=f"Evolución Histórica: {metrica_seleccionada}",
-        labels={'index': 'Número de Ejecución', 'puntuacion': 'Score'},
-        markers=True
-    )
-    
-    # Añadir una línea roja para el umbral (threshold)
-    fig.add_hline(y=df_filtrado['umbral'].iloc[0], line_dash="dash", line_color="red", annotation_text="Umbral Mínimo")
-    
-    # Ajustar rango del eje Y de 0 a 1
-    fig.update_yaxes(range=[0, 1.1])
-    
-    st.plotly_chart(fig, use_container_width=True)
+        # Iteramos sobre la lista datos_tabla generada en tu paso anterior
+        for i, fila in enumerate(datos_tabla):
+            try:
+                # Extraemos la pregunta de la fila actual
+                pregunta_evaluar = fila['Pregunta']
+                
+                # Llamada a tu función de métricas
+                resultados_api = obtener_metricas_pregunta(pregunta_evaluar)
+                
+                for res in resultados_api:
+                    for met in res['metricas']:
+                        estado_emoji = "✅ PASÓ" if met['paso'] else "❌ FALLÓ"
+                        datos_fila = {
+                            'Ronda': ronda_actual,
+                            'pregunta': res['pregunta'],
+                            'respuesta': res['respuesta'],
+                            'metrica': met['metrica'], 
+                            'puntuacion': met['puntuacion'],
+                            'umbral': met['umbral'],
+                            'estado': estado_emoji,
+                            'razon': met['razon']
+                        }
+                        resultados_ronda.append(datos_fila)
+                        todos_los_resultados.append(datos_fila)
+                        
+            except Exception as e:
+                if '503' in str(e) or 'UNAVAILABLE' in str(e):
+                    st.error(f'El servidor de Google está saturado :( Esperando...')
+                else:
+                    st.error(f'Error en pregunta: {e}. Reintentando...')
+            
+            progreso.progress((i + 1) / total)
 
-    # 5. Mostrar la tabla detallada debajo
-    st.subheader("Datos Detallados")
-    st.dataframe(df_filtrado[['metrica', 'puntuacion', 'umbral', 'estado']])
+        # Al finalizar la ronda, mostramos sus tablas específicas
+        if resultados_ronda:
+            df_ronda_completa = pd.DataFrame(resultados_ronda)
+            metricas_disponibles = df_ronda_completa['metrica'].unique()
+            for nombre_metrica in metricas_disponibles:
+                df_filtrado = df_ronda_completa[df_ronda_completa['metrica'] == nombre_metrica]
+                st.subheader(f'RESULTADOS DE LA RONDA {ronda_actual} EN {nombre_metrica.upper()}')
+                st.dataframe(df_filtrado, use_container_width=True)
 
-#semaforo
-def semaforo(df:pd.DataFrame):
-    metricas = ['Answer Relevancy', 'Concisión [GEval]','Exactitud [GEval]','Tono [GEval]']
-    total_filas = len(df)
-    for metrica in metricas:
-        conteo_positivo = df.loc[(df['metrica'] == metrica) & (df['estado'] == '✅ PASÓ')].shape[0]
-        conteo_negativo = df.loc[(df['metrica'] == metrica) & (df['estado'] == '❌ FALLÓ')].shape[0]
-        #valor = (conteo / total_filas) * 100
-        def operacion(conteo):
-            return (conteo / df.loc[df['metrica'] == metrica].shape[0]) * 100
-        if metrica == 'Answer Relevancy':
-            porcentaje_answer = operacion(conteo_positivo)
-            porcentaje_answer_negativo = operacion(conteo_negativo)
-        elif metrica == 'Concisión [GEval]':
-            porcentaje_consicion = operacion(conteo_positivo)
-            porcentaje_consicion_negativo = operacion(conteo_negativo)
-        elif metrica == 'Exactitud [GEval]':
-            porcentaje_exactitud = operacion(conteo_positivo)
-            porcentaje_exactitud_negativo = operacion(conteo_negativo)
-        elif metrica == 'Tono [GEval]':
-            porcentaje_tono = operacion(conteo_positivo)
-            porcentaje_tono_negativo = operacion(conteo_negativo) 
-    df_semaforo = pd.DataFrame({
-    "Metrica": ['Answer Relevancy', 'Concisión [GEval]','Exactitud [GEval]','Tono [GEval]'],
-    "Correctas": [round(porcentaje_answer,2),round(porcentaje_consicion,2), round(porcentaje_exactitud,2), round(porcentaje_tono,2)],
-    "Semaforo": [obtener_icono(porcentaje_answer),obtener_icono(porcentaje_consicion), obtener_icono(porcentaje_exactitud), obtener_icono(porcentaje_tono)],
-    "Interpretacion":[obtener_interpretacion(porcentaje_answer), obtener_interpretacion(porcentaje_consicion),obtener_interpretacion(porcentaje_exactitud), obtener_interpretacion(porcentaje_tono)]
-                            })
-    st.dataframe(df_semaforo)
-
-def grafica_barras(df:pd.DataFrame):
-    metricas = ['Answer Relevancy', 'Concisión [GEval]','Exactitud [GEval]','Tono [GEval]']
-    total_filas = len(df)
-    for metrica in metricas:
-        conteo_positivo = df.loc[(df['metrica'] == metrica) & (df['estado'] == '✅ PASÓ')].shape[0]
-        conteo_negativo = df.loc[(df['metrica'] == metrica) & (df['estado'] == '❌ FALLÓ')].shape[0]
-        #valor = (conteo / total_filas) * 100
-        def operacion(conteo):
-            return (conteo / df.loc[df['metrica'] == metrica].shape[0]) * 100
-        if metrica == 'Answer Relevancy':
-            porcentaje_answer = operacion(conteo_positivo)
-            porcentaje_answer_negativo = operacion(conteo_negativo)
-        elif metrica == 'Concisión [GEval]':
-            porcentaje_consicion = operacion(conteo_positivo)
-            porcentaje_consicion_negativo = operacion(conteo_negativo)
-        elif metrica == 'Exactitud [GEval]':
-            porcentaje_exactitud = operacion(conteo_positivo)
-            porcentaje_exactitud_negativo = operacion(conteo_negativo)
-        elif metrica == 'Tono [GEval]':
-            porcentaje_tono = operacion(conteo_positivo)
-            porcentaje_tono_negativo = operacion(conteo_negativo) 
-    correctas = [porcentaje_answer, porcentaje_consicion,porcentaje_exactitud, porcentaje_tono]
-    incorrectas = [porcentaje_answer_negativo, porcentaje_consicion_negativo,porcentaje_exactitud_negativo, porcentaje_tono_negativo]
-    #creamos figura
-    fig = go.Figure()
-
-    #barra de correctas
-    fig.add_trace(go.Bar(x=metricas, y= correctas, name='% Correctas', marker_color="#2fa168",text=[f"{v}" for v in correctas], textposition='outside'))
-    #barra de incorrectas
-    fig.add_trace(go.Bar(x=metricas, y= incorrectas, name='%Incorrectas', marker_color='#d35d5d',text=[f"{v}" for v in incorrectas], textposition='outside'))
-    
-
-    # 3. Diseño del gráfico (Layout)
-    fig.update_layout(
-    title='TOTAL DE CORRECTAS Y INCORRECTAS POR MÉTRICA',
-    barmode='group', # Agrupa las barras una al lado de la otra
-    yaxis=dict(title='Porcentaje', range=[0, 110]), # Rango hasta 110 para que quepan los textos
-    legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
-    plot_bgcolor='black'
-                )
-
-    # 4. Mostrar en Streamlit
-    st.plotly_chart(fig, use_container_width=True)
-
-
-print(df)
-print(df.columns)
+    # Resumen final si hubo resultados
+    if todos_los_resultados:
+        st.divider()
+        st.header('RESUMEN GLOBAL DE TODAS LAS RONDAS')
+        df_final = pd.DataFrame(todos_los_resultados)
+        st.dataframe(df_final, use_container_width=True)
         
-        
-
-
-
-
+        # Aquí puedes llamar a tus funciones de gráficas
+        # semaforo(df_final)
+        # grafica_barras(df_final)

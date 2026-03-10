@@ -7,12 +7,13 @@ from deepeval.models import GeminiModel
 from datetime import datetime
 from insercion import insertar_metricas_db, crear_df_resultados
 
+
 os.environ["DEEPEVAL_DISABLE_TIMEOUTS"] = "True"
 st.set_page_config(page_title="Evaluador de Chatbot", layout="wide")
 
 
 st.sidebar.title('Navegar')
-pagina = st.sidebar.radio('Ir a', ['Inicio', 'graficos', 'metricas','Cargar archivos'])
+pagina = st.sidebar.radio('Ir a', ['Inicio', 'graficos', 'metricas','Cargar archivos','Evaluar archivos generales'])
 
 try:
     from metricas import create_custom_metrics
@@ -134,5 +135,6 @@ elif pagina == 'Cargar archivos':
     import leer_archivos
     leer_archivos.mostrar()
 
-
-    
+elif pagina == 'Evaluar archivos generales':
+    import calendario_strem
+    calendario_strem.mostrar()
